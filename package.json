@@ -1,0 +1,8 @@
+{
+  "name": "bonerigging",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "bonerigging-app"
+  ]
+}

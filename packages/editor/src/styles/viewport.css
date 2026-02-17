@@ -1,0 +1,218 @@
+.br-root .viewport {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
+  background: #1a1a1a;
+  background-image:
+    linear-gradient(45deg, #1e1e1e 25%, transparent 25%),
+    linear-gradient(-45deg, #1e1e1e 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #1e1e1e 75%),
+    linear-gradient(-45deg, transparent 75%, #1e1e1e 75%);
+  background-size: 20px 20px;
+  background-position: 0 0, 0 10px, 10px -10px, -10px 0;
+}
+
+.br-root .viewport.drag-over {
+  background: #1a2a3a;
+  outline: 3px dashed #4a9eff;
+  outline-offset: -3px;
+}
+
+.br-root .viewport.edit-mode .pixi-canvas {
+  cursor: crosshair;
+}
+
+.br-root .viewport.weight-paint-mode {
+  cursor: none;
+}
+
+.br-root .svg-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.br-root .svg-container svg {
+  display: block;
+}
+
+.br-root .pixi-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.br-root .upload-prompt {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  color: #666;
+  font-size: 18px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.br-root .upload-prompt .icon {
+  font-size: 64px;
+  opacity: 0.3;
+}
+
+.br-root .upload-prompt .hint {
+  font-size: 13px;
+  color: #555;
+}
+
+.br-root .zoom-controls {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  z-index: 50;
+  pointer-events: auto;
+}
+
+.br-root .zoom-controls button {
+  width: 32px;
+  height: 32px;
+  border: 1px solid #555;
+  border-radius: 6px;
+  background: rgba(42,42,42,0.9);
+  color: #eee;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  backdrop-filter: blur(4px);
+}
+.br-root .zoom-controls button:hover { background: rgba(80,80,80,0.9); }
+
+.br-root .zoom-level {
+  font-size: 10px;
+  color: #999;
+  margin-top: 2px;
+  user-select: none;
+}
+
+/* ── Display toggle (eye icon + popover) ── */
+
+.br-root .display-toggle-container {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  z-index: 50;
+  pointer-events: auto;
+}
+
+.br-root .display-toggle-btn {
+  width: 32px;
+  height: 32px;
+  border: 1px solid #555;
+  border-radius: 6px;
+  background: rgba(42,42,42,0.9);
+  color: #ccc;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+  transition: background 0.15s, color 0.15s;
+}
+.br-root .display-toggle-btn:hover {
+  background: rgba(80,80,80,0.9);
+  color: #fff;
+}
+
+.br-root .display-toggle-popover {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 6px;
+  background: rgba(30,30,30,0.95);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  backdrop-filter: blur(8px);
+  min-width: 100px;
+}
+
+.br-root .display-toggle-item {
+  padding: 5px 10px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: #888;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+.br-root .display-toggle-item:hover {
+  background: rgba(255,255,255,0.06);
+  color: #ccc;
+}
+.br-root .display-toggle-item.active {
+  background: #4a7eff;
+  color: #fff;
+}
+
+/* ── Joint popover (pin button near selected joint) ── */
+
+.br-root .joint-popover {
+  position: absolute;
+  z-index: 40;
+  pointer-events: auto;
+  transform: translate(12px, -50%);
+}
+
+.br-root .joint-popover-btn {
+  width: 26px;
+  height: 26px;
+  border: 1px solid #555;
+  border-radius: 6px;
+  background: rgba(42,42,42,0.92);
+  color: #aaa;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.br-root .joint-popover-btn:hover {
+  background: rgba(80,80,80,0.9);
+  color: #fff;
+}
+.br-root .joint-popover-btn.active {
+  background: #4a7eff;
+  border-color: #4a7eff;
+  color: #fff;
+}
+
+.br-root .add-joint-help {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.85);
+  color: #ccc;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 10;
+}

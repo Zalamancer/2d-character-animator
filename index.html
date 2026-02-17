@@ -71,6 +71,40 @@ body {
     background-position: 0 0, 0 10px, 10px -10px, -10px 0;
 }
 
+#zoomControls {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    z-index: 50;
+    pointer-events: auto;
+}
+#zoomControls button {
+    width: 32px;
+    height: 32px;
+    border: 1px solid #555;
+    border-radius: 6px;
+    background: rgba(42,42,42,0.9);
+    color: #eee;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    backdrop-filter: blur(4px);
+}
+#zoomControls button:hover { background: rgba(80,80,80,0.9); }
+#zoomLevel {
+    font-size: 10px;
+    color: #999;
+    margin-top: 2px;
+    user-select: none;
+}
+
 #viewport.drag-over {
     background: #1a2a3a;
     outline: 3px dashed #4a9eff;
@@ -446,6 +480,12 @@ body {
     <div id="viewport">
         <div id="svg-container"></div>
         <canvas id="overlay"></canvas>
+        <div id="zoomControls">
+            <button id="zoomInBtn" title="Zoom In">+</button>
+            <button id="zoomResetBtn" title="Reset View">⟲</button>
+            <button id="zoomOutBtn" title="Zoom Out">−</button>
+            <span id="zoomLevel">100%</span>
+        </div>
         <div id="addJointHelp">Click on character to place joint, then click a parent joint</div>
         <div id="weightPanel">
             <h3 id="wpTitle">Bone Weights</h3>
@@ -2665,6 +2705,12 @@ class App {
         this.skeleton = null;
         this.weights = null;
         this.transform = null;
+        // Zoom & pan state (applied on top of fit-to-viewport base transform)
+        this._viewZoom = 1.0;
+        this._viewPanX = 0;
+        this._viewPanY = 0;
+        this._isPanning = false;
+        this._panStart = null;
 
         this.selectedJoint = null;
         this.hoveredJoint = null;
@@ -2757,9 +2803,65 @@ class App {
         this.canvas.addEventListener('pointerup', (e) => this._onPointerUp(e));
         this.canvas.addEventListener('pointerleave', (e) => this._onPointerUp(e));
 
+        // Zoom with scroll wheel (zoom toward cursor)
+        this.canvas.addEventListener('wheel', (e) => {
+            if (!this.parsed) return;
+            e.preventDefault();
+            const rect = this.canvas.getBoundingClientRect();
+            const mx = e.clientX - rect.left;
+            const my = e.clientY - rect.top;
+            const zoomFactor = e.deltaY < 0 ? 1.1 : 1 / 1.1;
+            const newZoom = Math.max(0.1, Math.min(20, this._viewZoom * zoomFactor));
+            // Zoom toward cursor: find SVG point under cursor, then adjust pan
+            // so that same SVG point stays under cursor after zoom change.
+            // screen = svgPt * base.scale * zoom + base.offset * zoom + pan
+            const base = this.renderer.getTransform(this.parsed);
+            const oldZoom = this._viewZoom;
+            const svgX = (mx - base.offsetX * oldZoom - this._viewPanX) / (base.scale * oldZoom);
+            const svgY = (my - base.offsetY * oldZoom - this._viewPanY) / (base.scale * oldZoom);
+            this._viewZoom = newZoom;
+            this._viewPanX = mx - svgX * base.scale * newZoom - base.offsetX * newZoom;
+            this._viewPanY = my - svgY * base.scale * newZoom - base.offsetY * newZoom;
+            this._computeTransform();
+            this._updateSVGTransform();
+            this._render();
+        }, { passive: false });
+
+        // Pan with middle mouse or Alt+left drag
+        this.canvas.addEventListener('pointerdown', (e) => {
+            if (e.button === 1 || (e.button === 0 && e.altKey)) {
+                e.preventDefault();
+                this._isPanning = true;
+                this._panStart = { x: e.clientX, y: e.clientY, panX: this._viewPanX, panY: this._viewPanY };
+                this.canvas.setPointerCapture(e.pointerId);
+            }
+        });
+        this.canvas.addEventListener('pointermove', (e) => {
+            if (this._isPanning && this._panStart) {
+                this._viewPanX = this._panStart.panX + (e.clientX - this._panStart.x);
+                this._viewPanY = this._panStart.panY + (e.clientY - this._panStart.y);
+                this._computeTransform();
+                this._updateSVGTransform();
+                this._render();
+            }
+        });
+        this.canvas.addEventListener('pointerup', (e) => {
+            if (this._isPanning) {
+                this._isPanning = false;
+                this._panStart = null;
+            }
+        });
+
+        // Double-click to reset zoom/pan
+        this.canvas.addEventListener('dblclick', (e) => {
+            if (e.altKey) {
+                this._resetView();
+            }
+        });
+
         window.addEventListener('resize', () => {
             if (this.parsed) {
-                this.transform = this.renderer.getTransform(this.parsed);
+                this._computeTransform();
                 this._updateSVGTransform();
                 this._render();
             }
@@ -2767,6 +2869,11 @@ class App {
     }
 
     _setupControls() {
+        // Zoom controls
+        document.getElementById('zoomInBtn').addEventListener('click', () => this._zoomBy(1.25));
+        document.getElementById('zoomOutBtn').addEventListener('click', () => this._zoomBy(1 / 1.25));
+        document.getElementById('zoomResetBtn').addEventListener('click', () => this._resetView());
+
         document.getElementById('resetBtn').addEventListener('click', () => this._resetPose());
         document.getElementById('editRigBtn').addEventListener('click', () => this._enterEditMode());
         document.getElementById('applyRigBtn').addEventListener('click', () => this._applyRigEdits());
@@ -3036,6 +3143,11 @@ class App {
             document.getElementById('modeIndicator').textContent = '';
         }
 
+        // Reset zoom/pan for new file
+        this._viewZoom = 1.0;
+        this._viewPanX = 0;
+        this._viewPanY = 0;
+
         try {
             if (isSVG) {
                 await this._loadSVG(file);
@@ -3071,7 +3183,7 @@ class App {
         this.uploadPrompt.style.display = 'none';
 
         // Compute transform
-        this.transform = this.renderer.getTransform(this.parsed);
+        this._computeTransform();
         this._updateSVGTransform();
 
         // Create skeleton
@@ -3136,7 +3248,7 @@ class App {
         this.uploadPrompt.style.display = 'none';
 
         // Compute transform
-        this.transform = this.renderer.getTransform(this.parsed);
+        this._computeTransform();
 
         // Generate mesh
         this.statusbar.textContent = 'Generating mesh...';
@@ -3190,6 +3302,51 @@ class App {
         });
     }
 
+    _computeTransform() {
+        if (!this.parsed) return;
+        const base = this.renderer.getTransform(this.parsed);
+        // Apply user zoom & pan on top of base fit-to-viewport transform
+        this.transform = {
+            scale: base.scale * this._viewZoom,
+            offsetX: base.offsetX * this._viewZoom + this._viewPanX,
+            offsetY: base.offsetY * this._viewZoom + this._viewPanY
+        };
+        this._updateZoomLabel();
+    }
+
+    _updateZoomLabel() {
+        const el = document.getElementById('zoomLevel');
+        if (el) el.textContent = Math.round(this._viewZoom * 100) + '%';
+    }
+
+    _zoomBy(factor) {
+        if (!this.parsed) return;
+        const newZoom = Math.max(0.1, Math.min(20, this._viewZoom * factor));
+        // Zoom toward center of viewport
+        const rect = this.canvas.getBoundingClientRect();
+        const cx = rect.width / 2;
+        const cy = rect.height / 2;
+        const base = this.renderer.getTransform(this.parsed);
+        const oldZoom = this._viewZoom;
+        const svgX = (cx - base.offsetX * oldZoom - this._viewPanX) / (base.scale * oldZoom);
+        const svgY = (cy - base.offsetY * oldZoom - this._viewPanY) / (base.scale * oldZoom);
+        this._viewZoom = newZoom;
+        this._viewPanX = cx - svgX * base.scale * newZoom - base.offsetX * newZoom;
+        this._viewPanY = cy - svgY * base.scale * newZoom - base.offsetY * newZoom;
+        this._computeTransform();
+        this._updateSVGTransform();
+        this._render();
+    }
+
+    _resetView() {
+        this._viewZoom = 1.0;
+        this._viewPanX = 0;
+        this._viewPanY = 0;
+        this._computeTransform();
+        this._updateSVGTransform();
+        this._render();
+    }
+
     _updateSVGTransform() {
         if (this.mode === 'raster') return;
         if (!this.displayedSVG || !this.transform) return;
@@ -3227,6 +3384,8 @@ class App {
 
     _onPointerDown(e) {
         if (!this.skeleton) return;
+        // Skip when panning (middle mouse or Alt+click)
+        if (this._isPanning || e.button === 1 || e.altKey) return;
         // Block interaction during animation playback
         if (this.animManager.isPlaying) return;
         const pos = this._getMousePos(e);
@@ -3284,7 +3443,7 @@ class App {
     }
 
     _onPointerMove(e) {
-        if (!this.skeleton) return;
+        if (!this.skeleton || this._isPanning) return;
         const pos = this._getMousePos(e);
 
         // Weight paint
@@ -4404,6 +4563,15 @@ class App {
             this._refreshAnimList();
             this._populateBoneFilter();
         }
+        this._repositionZoomControls();
+    }
+
+    _repositionZoomControls() {
+        const panel = document.getElementById('timelinePanel');
+        const zoom = document.getElementById('zoomControls');
+        if (!zoom) return;
+        const tlVisible = panel && panel.style.display !== 'none';
+        zoom.style.bottom = tlVisible ? (panel.offsetHeight + 12) + 'px' : '12px';
     }
 
     _populateBoneFilter() {
@@ -4521,6 +4689,7 @@ class App {
         document.getElementById('tlPlayBtn').disabled = true;
         document.getElementById('tlStopBtn').disabled = true;
         document.getElementById('timelinePanel').style.display = 'block';
+        this._repositionZoomControls();
         this._updateTimelineDisplay();
         this._updateKeyframeMarkers();
         const filterInfo = hasFilter ? ` (filtering ${this._recordBoneFilter.size} joints)` : ' (all bones)';

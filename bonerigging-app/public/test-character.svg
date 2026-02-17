@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 400" width="200" height="400">
+  <!-- Simple humanoid character for testing -->
+  <!-- Head -->
+  <circle cx="100" cy="40" r="30" fill="#ffcc88" stroke="#aa8855" stroke-width="2"/>
+  <!-- Eyes -->
+  <circle cx="88" cy="35" r="4" fill="#333"/>
+  <circle cx="112" cy="35" r="4" fill="#333"/>
+  <!-- Mouth -->
+  <path d="M90,50 Q100,58 110,50" fill="none" stroke="#aa5533" stroke-width="2"/>
+  <!-- Neck -->
+  <rect x="92" y="68" width="16" height="15" fill="#ffcc88" stroke="#aa8855" stroke-width="1"/>
+  <!-- Torso -->
+  <path d="M65,83 L135,83 L130,190 L70,190 Z" fill="#4488cc" stroke="#336699" stroke-width="2"/>
+  <!-- Left arm -->
+  <path d="M65,85 L35,85 L25,145 L30,150 L45,100 L65,100" fill="#ffcc88" stroke="#aa8855" stroke-width="1.5"/>
+  <!-- Right arm -->
+  <path d="M135,85 L165,85 L175,145 L170,150 L155,100 L135,100" fill="#ffcc88" stroke="#aa8855" stroke-width="1.5"/>
+  <!-- Left leg -->
+  <path d="M70,190 L80,190 L85,320 L95,320 L95,330 L65,330 L65,320 L75,320 Z" fill="#555577" stroke="#333355" stroke-width="1.5"/>
+  <!-- Right leg -->
+  <path d="M120,190 L130,190 L135,320 L140,320 L140,330 L115,330 L115,320 L125,320 Z" fill="#555577" stroke="#333355" stroke-width="1.5"/>
+  <!-- Belt -->
+  <rect x="68" y="183" width="64" height="10" fill="#886633" stroke="#664422" stroke-width="1" rx="2"/>
+</svg>

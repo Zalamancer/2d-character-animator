@@ -1,0 +1,84 @@
+.br-root .panel {
+  width: 220px;
+  background: rgba(30, 30, 30, 0.95);
+  border: 1px solid #444;
+  border-radius: 6px;
+  padding: 12px;
+  font-size: 12px;
+  color: #ccc;
+  backdrop-filter: blur(8px);
+}
+
+.br-root .panel h3 {
+  font-size: 13px;
+  margin-bottom: 8px;
+  color: #aaa;
+  font-weight: 600;
+}
+
+.br-root .panel .hint {
+  color: #555;
+  font-size: 10px;
+  margin-top: 8px;
+  line-height: 1.4;
+}
+
+/* Weight Panel */
+.br-root .bone-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.br-root .bone-row label {
+  flex: 1;
+  color: #ccc;
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.br-root .bone-row input[type="range"] {
+  width: 80px;
+  height: 4px;
+  cursor: pointer;
+  accent-color: #4488ff;
+}
+
+.br-root .bone-row .val {
+  width: 28px;
+  text-align: right;
+  color: #888;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.br-root .section-title {
+  color: #666;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 8px 0 4px;
+  border-top: 1px solid #333;
+  padding-top: 6px;
+}
+
+/* Pose Panel */
+.br-root .pose-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 4px;
+  padding: 4px 6px;
+  background: #2a2a2a;
+  border-radius: 3px;
+  font-size: 12px;
+}
+
+.br-root .pose-item button { padding: 2px 6px; font-size: 10px; }
+.br-root .pose-item .pose-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Weight Paint Mode */
+.br-root .wp-mode.active { background: #446; border-color: #88f; color: #aaf; }
