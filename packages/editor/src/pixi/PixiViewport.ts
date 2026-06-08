@@ -4,6 +4,7 @@ import { RasterMesh } from './RasterMesh';
 import { MeshOverlay } from './MeshOverlay';
 import { WeightOverlay } from './WeightOverlay';
 import { EnvelopeOverlay } from './EnvelopeOverlay';
+import { RotationGizmoOverlay } from './RotationGizmoOverlay';
 import type { Skeleton } from '@bonerigging/core';
 import type { ParsedCharacter } from '@bonerigging/core';
 import type { MeshData } from '@bonerigging/core';
@@ -42,6 +43,7 @@ export class PixiViewport {
   private meshDebugLayer!: Container;
   private weightLayer!: Container;
   private boneLayer!: Container;
+  private gizmoLayer!: Container;
 
   // Sub-renderers
   rasterMesh!: RasterMesh;
@@ -49,6 +51,7 @@ export class PixiViewport {
   meshOverlay!: MeshOverlay;
   weightOverlay!: WeightOverlay;
   envelopeOverlay!: EnvelopeOverlay;
+  rotationGizmo!: RotationGizmoOverlay;
 
   constructor() {
     this.app = new Application();
@@ -80,6 +83,8 @@ export class PixiViewport {
     this.app.stage.addChild(this.meshDebugLayer);
     this.app.stage.addChild(this.weightLayer);
     this.app.stage.addChild(this.boneLayer);
+    this.gizmoLayer = new Container();
+    this.app.stage.addChild(this.gizmoLayer);
 
     // Create sub-renderers
     this.rasterMesh = new RasterMesh(this.rasterMeshLayer);
@@ -87,6 +92,7 @@ export class PixiViewport {
     this.meshOverlay = new MeshOverlay(this.meshDebugLayer);
     this.weightOverlay = new WeightOverlay(this.weightLayer);
     this.envelopeOverlay = new EnvelopeOverlay(this.envelopeLayer);
+    this.rotationGizmo = new RotationGizmoOverlay(this.gizmoLayer);
 
     this.initialized = true;
   }
@@ -147,6 +153,14 @@ export class PixiViewport {
       this.boneOverlay.draw(skeleton, transform, selectedJoint, hoveredJoint, pinnedJoints, editMode, showLabels, state.uiScale ?? 1);
     } else {
       this.boneLayer.visible = false;
+    }
+
+    // Rotation gizmo
+    if (showBones && skeleton && transform && selectedJoint && !editMode) {
+      this.gizmoLayer.visible = true;
+      this.rotationGizmo.draw(skeleton, transform, selectedJoint, editMode, state.uiScale ?? 1);
+    } else {
+      this.gizmoLayer.visible = false;
     }
   }
 
